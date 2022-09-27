@@ -24,8 +24,8 @@ type element struct {
 	ParentPath string `json:"parentPath"`
 }
 type Node struct {
-	Item     bool
-	Children map[string]*Node
+	Item     bool             `json:"Item,omitempty"`
+	Children map[string]*Node `json:"Children,omitempty"`
 }
 
 func (f *hierarchyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -35,14 +35,14 @@ func (f *hierarchyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		handleBadRequest(w, err)
 		return
 	}
-	allData, err := getAllElements(records)
+	allElements, err := getAllElements(records)
 	if err != nil {
 		handleBadRequest(w, err)
 		return
 	}
 	var node = Node{}
 	var parentPath = ""
-	generateNode(&node, parentPath, allData)
+	generateNode(&node, parentPath, allElements)
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(node)
 }
@@ -130,7 +130,7 @@ func removeEptElements(row []string, indiceOfEptElements []int) []string {
 func generateNode(node *Node, currentPath string, elements []element) {
 	children := getChildren(currentPath, elements)
 	// fmt.Println("children------->", children)
-	node.Children = make(map[string]*Node)
+	node.Children = map[string]*Node{} //make(map[string]*Node)
 
 	for key := range children {
 		node.Children[key] = &Node{}
