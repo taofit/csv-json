@@ -5,27 +5,24 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 
-	// "reflect"
 	"strings"
 	// "github.com/formulatehq/data-engineer"
 )
 
 type hierarchyHandler struct{}
-type Data struct {
-	Item_id string `json:"item_id"`
-	Level_1 string `json:"level_1"`
-	Level_2 string `json:"level_2"`
-}
+
+// type Data struct {
+// 	Item_id string `json:"item_id"`
+// 	Level_1 string `json:"level_1"`
+// 	Level_2 string `json:"level_2"`
+// }
 
 type element struct {
 	Value      string `json:"value"`
 	ParentPath string `json:"parentPath"`
-	// Children map[string]element
 }
-
 type Node struct {
 	Item     bool
 	Children map[string]*Node
@@ -33,19 +30,28 @@ type Node struct {
 
 func (f *hierarchyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
 	records, err := csv.NewReader(r.Body).ReadAll()
 	if err != nil {
-		log.Fatalf("something wrong %v", err.Error())
+		handleBadRequest(w, err)
+		return
 	}
 	allData, err := getAllElements(records)
 	if err != nil {
-		log.Fatalf("somtthing wrong %v", err.Error())
+		handleBadRequest(w, err)
+		return
 	}
-	var initialNode = Node{}
+	var node = Node{}
 	var parentPath = ""
-	generateNode(&initialNode, parentPath, allData)
-	json.NewEncoder(w).Encode(initialNode)
+	generateNode(&node, parentPath, allData)
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(node)
+}
+
+func handleBadRequest(w http.ResponseWriter, err error) {
+	w.WriteHeader(http.StatusBadRequest)
+	resp := make(map[string]string)
+	resp["message"] = err.Error()
+	json.NewEncoder(w).Encode(resp)
 }
 
 func getAllElements(records [][]string) ([]element, error) {
@@ -62,22 +68,68 @@ func getAllElements(records [][]string) ([]element, error) {
 			continue
 		}
 		if isFirstElementLevel {
+			fmt.Println(row)
+			if !validateRecord(row) {
+				return []element{}, errors.New("invidate structure")
+			}
+			row = getRowRemoveEptElements(row)
 			for j, ele := range row {
 				parentPath := strings.Join(row[:j], ",")
 				elements = append(elements, element{ele, parentPath})
 			}
 		}
 	}
+
 	return elements, nil
 }
 
-func validateRecord() {
-	
+func validateRecord(row []string) bool {
+	if len(row) < 2 {
+		return false
+	}
+	if row[0] == "" || row[len(row)-1] == "" {
+		return false
+	}
+	var hasEptElement = false
+	for i, element := range row {
+		if element == "" {
+			hasEptElement = true
+		}
+		if element != "" && hasEptElement && i != len(row)-1 {
+			return false
+		}
+	}
+
+	return true
+}
+
+func getRowRemoveEptElements(row []string) []string {
+	indiceOfEptElements := getIndiceOfEptElements(row)
+	if len(indiceOfEptElements) > 0 {
+		row = removeEptElements(row, indiceOfEptElements)
+	}
+	return row
+}
+
+func getIndiceOfEptElements(row []string) (indiceOfEptElements []int) {
+	indiceOfEptElements = []int{}
+	for i, element := range row {
+		if element == "" {
+			indiceOfEptElements = append(indiceOfEptElements, i)
+		}
+	}
+	return
+}
+
+func removeEptElements(row []string, indiceOfEptElements []int) []string {
+	firstIndexOfEptElement := indiceOfEptElements[0]
+	lastIndexOfEptElement := indiceOfEptElements[len(indiceOfEptElements)-1]
+	return append(row[:firstIndexOfEptElement], row[lastIndexOfEptElement+1:]...)
 }
 
 func generateNode(node *Node, currentPath string, elements []element) {
 	children := getChildren(currentPath, elements)
-	fmt.Println("children------->", children)
+	// fmt.Println("children------->", children)
 	node.Children = make(map[string]*Node)
 
 	for key := range children {
