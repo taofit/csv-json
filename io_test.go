@@ -67,6 +67,104 @@ func Test(t *testing.T) {
 			},
 		},
 		{
+			Description:    "well-formed-4-column payload",
+			WantStatusCode: http.StatusOK,
+			In:             wellFormed4ColPayload,
+			Want: Node{
+				Children: map[string]Node{
+					"1": {
+						Children: map[string]Node{
+							"11": {
+								Children: map[string]Node{
+									"117": {
+										Children: map[string]Node{
+											"123": {
+												Children: map[string]Node{
+													"28646877": {
+														Item: true,
+													},
+												},
+											},
+										},
+									},
+									"54518789": {
+										Item: true,
+									},
+								},
+							},
+							"12": {
+								Children: map[string]Node{
+									"124": {
+										Children: map[string]Node{
+											"234": {
+												Children: map[string]Node{
+													"67564958": {
+														Item: true,
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+							"16": {
+								Children: map[string]Node{
+									"132": {
+										Children: map[string]Node{
+											"242": {
+												Children: map[string]Node{
+													"21196277": {
+														Item: true,
+													},
+													"74532108": {
+														Item: true,
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					"2": {
+						Children: map[string]Node{
+							"11": {
+								Children: map[string]Node{
+									"126": {
+										Children: map[string]Node{
+											"234": {
+												Children: map[string]Node{
+													"88787379": {
+														Item: true,
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+							"15": {
+								Children: map[string]Node{
+									"112": {
+										Children: map[string]Node{
+											"445": {
+												Children: map[string]Node{
+													"10649061": {
+														Item: true,
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			Description:    "erroneous non-N/A at higher depth",
 			WantStatusCode: http.StatusBadRequest,
 			In:             illegalNaPayload,
@@ -136,6 +234,15 @@ const illegalNaPayload = `item_id,level_1,level_2
 4,A,D
 5,B,E
 6,B,E
+`
+const wellFormed4ColPayload = `level_1,level_2,level_3,level_4,item_id
+1,12,124,234,67564958
+2,15,112,445,10649061
+1,11,117,123,28646877
+1,16,132,242,74532108
+1,16,132,242,21196277
+2,11,126,234,88787379
+1,11,,,54518789
 `
 
 func loadTest(test testDefinition) (reqBody io.Reader, want Node, err error) {

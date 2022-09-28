@@ -8,24 +8,17 @@ import (
 	"net/http"
 
 	"strings"
-	// "github.com/formulatehq/data-engineer"
 )
 
 type hierarchyHandler struct{}
-
-// type Data struct {
-// 	Item_id string `json:"item_id"`
-// 	Level_1 string `json:"level_1"`
-// 	Level_2 string `json:"level_2"`
-// }
 
 type element struct {
 	Value      string `json:"value"`
 	ParentPath string `json:"parentPath"`
 }
-type Node struct {
-	Item     bool             `json:"Item,omitempty"`
-	Children map[string]*Node `json:"Children,omitempty"`
+type node struct {
+	Item     bool             `json:"item,omitempty"`
+	Children map[string]*node `json:"children,omitempty"`
 }
 
 func (f *hierarchyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -40,10 +33,10 @@ func (f *hierarchyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		handleBadRequest(w, err)
 		return
 	}
-	var node = Node{}
-	var parentPath = ""
-	generateNode(&node, parentPath, allElements)
-	w.WriteHeader(http.StatusCreated)
+	var node = node{}
+	var currentPath = ""
+	generateNode(&node, currentPath, allElements)
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(node)
 }
 
@@ -67,17 +60,19 @@ func getAllElements(records [][]string) ([]element, error) {
 			}
 			continue
 		}
-		if isFirstElementLevel {
-			fmt.Println(row)
-			if !validateRecord(row) {
-				return []element{}, errors.New("invidate structure")
-			}
-			row = getRowRemoveEptElements(row)
-			for j, ele := range row {
-				parentPath := strings.Join(row[:j], ",")
-				elements = append(elements, element{ele, parentPath})
-			}
+
+		if !isFirstElementLevel {
+			row = append(row[1:], row[0])
 		}
+		if !validateRecord(row) {
+			return []element{}, errors.New("invalid structure")
+		}
+		row = getRowRemoveEptElements(row)
+		for j, ele := range row {
+			parentPath := strings.Join(row[:j], ",")
+			elements = append(elements, element{ele, parentPath})
+		}
+
 	}
 
 	return elements, nil
@@ -127,27 +122,25 @@ func removeEptElements(row []string, indiceOfEptElements []int) []string {
 	return append(row[:firstIndexOfEptElement], row[lastIndexOfEptElement+1:]...)
 }
 
-func generateNode(node *Node, currentPath string, elements []element) {
+func generateNode(aNode *node, currentPath string, elements []element) {
 	children := getChildren(currentPath, elements)
-	// fmt.Println("children------->", children)
-	node.Children = map[string]*Node{} //make(map[string]*Node)
+	aNode.Children = map[string]*node{}
 
 	for key := range children {
-		node.Children[key] = &Node{}
-		var tempCurrentPath string
+		aNode.Children[key] = &node{}
+		var childCurrentPath string
 		if currentPath == "" {
-			tempCurrentPath = key
+			childCurrentPath = key
 		} else {
-			tempCurrentPath = currentPath + "," + key
+			childCurrentPath = currentPath + "," + key
 		}
-		fmt.Println("key----->", "\""+key+"\"", tempCurrentPath)
-		generateNode(node.Children[key], tempCurrentPath, elements)
+		generateNode(aNode.Children[key], childCurrentPath, elements)
 	}
 	if len(children) == 0 {
 		var pathArr = strings.Split(currentPath, ",")
 		var currentValue = pathArr[len(pathArr)-1]
 		if currentValue != "" {
-			node.Item = true
+			aNode.Item = true
 		}
 	}
 }
