@@ -52,7 +52,7 @@ func getAllElements(records [][]string) ([]element, error) {
 	var isFirstElementLevel = true
 	for i, row := range records {
 		if i == 0 {
-			if row[0] != "level_1" && row[0] != "item_id" {
+			if isValidHeader(row[0]) {
 				return []element{}, errors.New("wrong header structure")
 			}
 			if row[0] == "item_id" {
@@ -64,7 +64,7 @@ func getAllElements(records [][]string) ([]element, error) {
 		if !isFirstElementLevel {
 			row = append(row[1:], row[0])
 		}
-		if !validateRecord(row) {
+		if !isRowValid(row) {
 			return []element{}, errors.New("invalid structure")
 		}
 		row = getRowRemoveEptElements(row)
@@ -78,7 +78,11 @@ func getAllElements(records [][]string) ([]element, error) {
 	return elements, nil
 }
 
-func validateRecord(row []string) bool {
+func isValidHeader(element string) bool {
+	return element != "level_1" && element != "item_id"
+}
+
+func isRowValid(row []string) bool {
 	if len(row) < 2 {
 		return false
 	}
