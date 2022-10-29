@@ -1,23 +1,12 @@
-# fullstack-engineer assignment
+# Project description
 
-# What to do
-
-1. Fork the repository
-2. Solve the assignment below
-3. Create a pull request in your forked repo, write a short description of your solution and flag for any constraints and/or trade-offs in your code. Treat it as you would like to treat any PR at work
-4. Ask your contact person for reviewers to assign to your PR. Hopefully you'll exchange some comments & feedback before having a follow up discussion in person or online.
-
-# Assignment
-
-The task is to construct a HTTP server, written in go, that listens on `http://localhost:8080`,
-takes in a hierarchy of items in a flat structure (`CSV`), and returns it as a
+The project is to build a HTTP server, that listens on `http://localhost:8080`,
+then it takes in a hierarchy of items in a flat structure (`CSV`), and returns it as a
 nested hierarchical structure (`JSON`).
 
 ## Running the tests
 
 The tests are defined in `io_test.go` and can be run with `go test`.
-
-Note that the code can be written in any language of choice (e.g. Python, Java, Scala, Go etc).
 
 ## The task
 
@@ -38,7 +27,7 @@ category_1,category_2,item_1
 category_1,category_3,item_2
 ```
 
-The task is to respond with the following schema:
+The result shows the following schema:
 
 ```json
 {
